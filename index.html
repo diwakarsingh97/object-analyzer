@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Object Analyzer</title>
+<title>Object Analyzer</title>
 
 <style>
 * {
@@ -12,171 +12,107 @@
 
 body {
     margin: 0;
-    min-height: 100vh;
-    font-family: Arial, sans-serif;
     background: #080b12;
     color: white;
-    display: flex;
-    justify-content: center;
-    padding: 25px;
+    font-family: Arial, sans-serif;
+    text-align: center;
 }
 
-.app {
-    width: 100%;
-    max-width: 1000px;
+.container {
+    width: 95%;
+    max-width: 900px;
+    margin: 30px auto;
 }
 
 h1 {
-    text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
 }
 
 .subtitle {
-    text-align: center;
     color: #9da5b4;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
-.camera-box {
+.camera {
     position: relative;
     width: 100%;
-    background: #000;
-    border-radius: 18px;
+    background: black;
+    border-radius: 15px;
     overflow: hidden;
-    border: 1px solid #252b38;
 }
 
 video {
-    display: block;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    display: block;
+    background: black;
+    min-height: 300px;
     object-fit: cover;
 }
 
-.scan-line {
-    position: absolute;
-    left: 5%;
-    right: 5%;
-    top: 50%;
-    height: 2px;
-    background: #00ff9d;
-    box-shadow: 0 0 15px #00ff9d;
-    opacity: 0;
-}
-
-.scanning .scan-line {
-    opacity: 1;
-    animation: scan 1.5s linear infinite;
-}
-
-@keyframes scan {
-    0% {
-        top: 10%;
-    }
-    50% {
-        top: 90%;
-    }
-    100% {
-        top: 10%;
-    }
-}
-
-.status {
-    margin-top: 15px;
-    padding: 14px;
-    background: #111620;
-    border-radius: 10px;
-    text-align: center;
-    color: #9da5b4;
-}
-
 .controls {
+    margin: 20px 0;
     display: flex;
-    gap: 12px;
     justify-content: center;
-    margin: 18px 0;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
 button {
-    border: none;
-    border-radius: 10px;
-    padding: 13px 22px;
-    font-size: 15px;
+    padding: 13px 20px;
+    border: 0;
+    border-radius: 9px;
     cursor: pointer;
-    background: #00d084;
-    color: #04120c;
+    font-size: 15px;
     font-weight: bold;
 }
 
-button.secondary {
-    background: #252b38;
+#start {
+    background: #00d084;
+}
+
+#scan {
+    background: #298cff;
+    color: white;
+}
+
+#stop {
+    background: #333b48;
     color: white;
 }
 
 button:disabled {
-    opacity: .45;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
+.status {
+    padding: 12px;
+    background: #111722;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
 .result {
-    background: #111620;
-    border: 1px solid #252b38;
-    border-radius: 15px;
-    padding: 22px;
+    text-align: left;
+    background: #111722;
+    padding: 20px;
+    border-radius: 12px;
 }
 
 .result h2 {
     margin-top: 0;
 }
 
-.result-name {
-    font-size: 28px;
-    font-weight: bold;
+.name {
+    font-size: 25px;
     color: #00d084;
-    margin-bottom: 12px;
+    font-weight: bold;
 }
 
 .description {
-    color: #c5cbd5;
+    margin-top: 10px;
+    color: #c8ced8;
     line-height: 1.6;
-}
-
-.badge {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 7px 12px;
-    border-radius: 20px;
-    background: #1d2730;
-    color: #9dffda;
-}
-
-.loader {
-    display: none;
-    margin: 15px auto;
-    width: 35px;
-    height: 35px;
-    border: 4px solid #333;
-    border-top-color: #00d084;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.loading .loader {
-    display: block;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.small {
-    color: #7f8795;
-    font-size: 13px;
-    margin-top: 20px;
-    text-align: center;
 }
 
 canvas {
@@ -187,452 +123,293 @@ canvas {
 
 <body>
 
-<div class="app">
+<div class="container">
 
-    <h1>🔬 AI Object Analyzer</h1>
+<h1>🔬 AI Object Analyzer</h1>
 
-    <div class="subtitle">
-        Show an object, human or animal to the camera
-    </div>
+<div class="subtitle">
+Put any object, human or animal in front of your camera
+</div>
 
-    <div class="camera-box" id="cameraBox">
+<div class="camera">
+    <video id="video" autoplay muted playsinline></video>
+</div>
 
-        <video id="camera" autoplay playsinline></video>
+<div class="controls">
 
-        <div class="scan-line"></div>
+    <button id="start">
+        📷 Start Camera
+    </button>
 
-    </div>
+    <button id="scan" disabled>
+        🔍 Analyze Object
+    </button>
 
-    <div class="status" id="status">
-        Starting AI model...
-    </div>
-
-    <div class="loader" id="loader"></div>
-
-    <div class="controls">
-
-        <button id="startBtn" disabled>
-            📷 Start Camera
-        </button>
-
-        <button id="scanBtn" disabled>
-            🔍 Analyze
-        </button>
-
-        <button id="stopBtn" class="secondary" disabled>
-            ⛔ Stop
-        </button>
-
-    </div>
-
-    <div class="result">
-
-        <h2>Analysis Result</h2>
-
-        <div class="result-name" id="resultName">
-            Waiting...
-        </div>
-
-        <div class="description" id="description">
-            Start the camera and place something in front of it.
-        </div>
-
-        <div class="badge" id="category">
-            AI Vision
-        </div>
-
-    </div>
-
-    <canvas id="canvas"></canvas>
-
-    <div class="small">
-        AI runs directly in your browser. The first model download can take some time.
-    </div>
+    <button id="stop" disabled>
+        ⛔ Stop Camera
+    </button>
 
 </div>
 
-<script type="module">
+<div class="status" id="status">
+    Camera is not started.
+</div>
 
-import { pipeline }
-from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/+esm";
+<div class="result">
 
-const video = document.getElementById("camera");
+<h2>Analysis</h2>
+
+<div class="name" id="name">
+    Waiting...
+</div>
+
+<div class="description" id="description">
+    Start the camera and show something in front of it.
+</div>
+
+</div>
+
+<canvas id="canvas"></canvas>
+
+</div>
+
+
+<script>
+
+const video = document.getElementById("video");
+
+const startButton = document.getElementById("start");
+const scanButton = document.getElementById("scan");
+const stopButton = document.getElementById("stop");
+
+const statusText = document.getElementById("status");
+
+const resultName = document.getElementById("name");
+const resultDescription = document.getElementById("description");
+
 const canvas = document.getElementById("canvas");
 
-const startBtn = document.getElementById("startBtn");
-const scanBtn = document.getElementById("scanBtn");
-const stopBtn = document.getElementById("stopBtn");
-
-const status = document.getElementById("status");
-const resultName = document.getElementById("resultName");
-const description = document.getElementById("description");
-const category = document.getElementById("category");
-
-const cameraBox = document.getElementById("cameraBox");
-const app = document.querySelector(".app");
-
-let stream = null;
-let analyzer = null;
-let analyzing = false;
+let cameraStream = null;
 
 
-/* ---------------------------------------
-   LOAD AI MODEL
---------------------------------------- */
-
-async function loadAI() {
-
-    try {
-
-        status.textContent =
-            "Loading AI vision model... First load may take a while.";
-
-        analyzer = await pipeline(
-            "image-to-text",
-            "Xenova/vit-gpt2-image-captioning"
-        );
-
-        status.textContent =
-            "AI ready. Start your camera.";
-
-        startBtn.disabled = false;
-
-    } catch (error) {
-
-        console.error(error);
-
-        status.textContent =
-            "AI model failed to load. Check your internet connection.";
-
-    }
-
-}
-
-
-/* ---------------------------------------
+/* ================================
    START CAMERA
---------------------------------------- */
+================================ */
 
 async function startCamera() {
 
+    statusText.innerText = "Requesting camera permission...";
+
     try {
 
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: "user",
-                width: {
-                    ideal: 1280
-                },
-                height: {
-                    ideal: 720
-                }
-            },
-            audio: false
-        });
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
 
-        video.srcObject = stream;
+            throw new Error(
+                "Camera API is not available. Open this website using HTTPS."
+            );
+        }
+
+
+        cameraStream =
+            await navigator.mediaDevices.getUserMedia({
+
+                video: {
+                    width: {
+                        ideal: 1280
+                    },
+
+                    height: {
+                        ideal: 720
+                    },
+
+                    facingMode: "user"
+                },
+
+                audio: false
+
+            });
+
+
+        video.srcObject = cameraStream;
 
         await video.play();
 
-        startBtn.disabled = true;
-        scanBtn.disabled = false;
-        stopBtn.disabled = false;
 
-        status.textContent =
-            "Camera active. Put an object in front of the camera.";
+        statusText.innerText =
+            "🟢 Camera is working. Show an object.";
+
+        startButton.disabled = true;
+
+        scanButton.disabled = false;
+
+        stopButton.disabled = false;
+
 
     } catch (error) {
 
         console.error(error);
 
-        status.textContent =
-            "Camera access failed. Please allow camera permission.";
+        statusText.innerText =
+            "❌ Camera error: " + error.message;
+
+        alert(
+            "Camera could not start.\n\n" +
+            "Make sure you:\n" +
+            "1. Allow camera permission\n" +
+            "2. Use HTTPS / GitHub Pages\n" +
+            "3. Don't open the file directly from your computer\n\n" +
+            "Error: " + error.message
+        );
 
     }
 
 }
 
 
-/* ---------------------------------------
+/* ================================
    STOP CAMERA
---------------------------------------- */
+================================ */
 
 function stopCamera() {
 
-    if (stream) {
+    if (cameraStream) {
 
-        stream.getTracks().forEach(track => {
-            track.stop();
-        });
+        cameraStream
+            .getTracks()
+            .forEach(track => track.stop());
 
-        stream = null;
-
+        cameraStream = null;
     }
 
     video.srcObject = null;
 
-    startBtn.disabled = false;
-    scanBtn.disabled = true;
-    stopBtn.disabled = true;
+    startButton.disabled = false;
 
-    status.textContent =
+    scanButton.disabled = true;
+
+    stopButton.disabled = true;
+
+    statusText.innerText =
         "Camera stopped.";
 
 }
 
 
-/* ---------------------------------------
-   CAPTURE CAMERA FRAME
---------------------------------------- */
+/* ================================
+   CAPTURE IMAGE
+================================ */
 
-function captureFrame() {
+function captureImage() {
 
-    const width = video.videoWidth;
-    const height = video.videoHeight;
+    if (!cameraStream) {
 
-    if (!width || !height) {
-        throw new Error("Camera frame is not ready.");
+        alert("Start the camera first.");
+
+        return null;
     }
 
-    canvas.width = width;
-    canvas.height = height;
+    if (
+        video.videoWidth === 0 ||
+        video.videoHeight === 0
+    ) {
 
-    const ctx = canvas.getContext("2d");
+        alert("Camera is not ready yet.");
 
-    ctx.drawImage(
+        return null;
+    }
+
+
+    canvas.width = video.videoWidth;
+
+    canvas.height = video.videoHeight;
+
+
+    const context =
+        canvas.getContext("2d");
+
+
+    context.drawImage(
         video,
         0,
         0,
-        width,
-        height
+        canvas.width,
+        canvas.height
     );
 
-    return canvas;
+
+    return canvas.toDataURL(
+        "image/jpeg",
+        0.85
+    );
 
 }
 
 
-/* ---------------------------------------
-   ANALYZE IMAGE
---------------------------------------- */
+/* ================================
+   TEMPORARY ANALYZER
+================================ */
 
-async function analyzeObject() {
+function analyzeObject() {
 
-    if (!analyzer) {
+    const image = captureImage();
 
-        status.textContent =
-            "AI is still loading.";
-
-        return;
-
-    }
-
-    if (!stream) {
-
-        status.textContent =
-            "Start the camera first.";
-
-        return;
-
-    }
-
-    if (analyzing) {
+    if (!image) {
         return;
     }
 
-    analyzing = true;
 
-    scanBtn.disabled = true;
+    /*
+       CAMERA IS NOW CONFIRMED WORKING.
 
-    cameraBox.classList.add("scanning");
-    app.classList.add("loading");
-
-    status.textContent =
-        "AI is analyzing what is in front of the camera...";
-
-    resultName.textContent =
-        "Analyzing...";
-
-    description.textContent =
-        "The AI is examining the image.";
-
-    category.textContent =
-        "Scanning";
+       The next step is connecting this image
+       to a real vision AI model.
+    */
 
 
-    try {
-
-        const image = captureFrame();
-
-        const output = await analyzer(image, {
-            max_new_tokens: 40
-        });
-
-        console.log("AI OUTPUT:", output);
-
-        let text = "";
-
-        if (Array.isArray(output) && output.length > 0) {
-
-            text = output[0].generated_text || "";
-
-        }
-
-        if (!text) {
-
-            throw new Error("AI returned no description.");
-
-        }
+    resultName.innerText =
+        "Image captured successfully ✅";
 
 
-        text = text.trim();
+    resultDescription.innerText =
+        "Your camera is working. The next step is connecting this captured image to an open-ended vision AI model that can identify arbitrary objects.";
 
-        /*
-          Convert the generated caption into
-          a readable result.
-        */
-
-        let cleanText =
-            text.charAt(0).toUpperCase() +
-            text.slice(1);
-
-        /*
-          Very simple category detection.
-          This does NOT restrict what the AI can see.
-        */
-
-        const lower = cleanText.toLowerCase();
-
-        let detectedCategory = "OBJECT";
-
-        const animals = [
-            "dog",
-            "cat",
-            "bird",
-            "horse",
-            "cow",
-            "sheep",
-            "goat",
-            "elephant",
-            "bear",
-            "zebra",
-            "giraffe",
-            "animal",
-            "fish",
-            "rabbit",
-            "monkey"
-        ];
-
-        const humanWords = [
-            "person",
-            "man",
-            "woman",
-            "human",
-            "boy",
-            "girl",
-            "people"
-        ];
-
-        if (
-            humanWords.some(word =>
-                lower.includes(word)
-            )
-        ) {
-
-            detectedCategory = "HUMAN";
-
-        } else if (
-            animals.some(word =>
-                lower.includes(word)
-            )
-        ) {
-
-            detectedCategory = "ANIMAL";
-
-        }
-
-
-        /*
-          Display the AI's actual description.
-        */
-
-        resultName.textContent =
-            cleanText;
-
-        description.textContent =
-            "The AI vision model describes the camera image as: " +
-            cleanText;
-
-        category.textContent =
-            detectedCategory;
-
-        status.textContent =
-            "Analysis complete.";
-
-    } catch (error) {
-
-        console.error(error);
-
-        resultName.textContent =
-            "Could not analyze";
-
-        description.textContent =
-            "The AI could not analyze this frame. Try better lighting and make sure the object is clearly visible.";
-
-        category.textContent =
-            "ERROR";
-
-        status.textContent =
-            "Analysis failed.";
-
-    }
-
-
-    cameraBox.classList.remove("scanning");
-    app.classList.remove("loading");
-
-    scanBtn.disabled = false;
-
-    analyzing = false;
+    statusText.innerText =
+        "📸 Image captured.";
 
 }
 
 
-/* ---------------------------------------
-   BUTTONS
---------------------------------------- */
+/* ================================
+   BUTTON EVENTS
+================================ */
 
-startBtn.addEventListener(
+startButton.addEventListener(
     "click",
     startCamera
 );
 
-stopBtn.addEventListener(
+
+stopButton.addEventListener(
     "click",
     stopCamera
 );
 
-scanBtn.addEventListener(
+
+scanButton.addEventListener(
     "click",
     analyzeObject
 );
 
 
-/* ---------------------------------------
+/* ================================
    CLEANUP
---------------------------------------- */
+================================ */
 
 window.addEventListener(
     "beforeunload",
     stopCamera
 );
-
-
-/* ---------------------------------------
-   INITIALIZE AI
---------------------------------------- */
-
-loadAI();
 
 </script>
 
