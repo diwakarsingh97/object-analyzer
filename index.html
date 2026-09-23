@@ -1,9 +1,11 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Object Analyzer</title>
+
+<title>AI Object Analyzer</title>
 
 <style>
 * {
@@ -12,107 +14,196 @@
 
 body {
     margin: 0;
-    background: #080b12;
+    min-height: 100vh;
+    background: #05070b;
     color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .container {
-    width: 95%;
-    max-width: 900px;
+    width: 94%;
+    max-width: 950px;
     margin: 30px auto;
 }
 
 h1 {
-    margin-bottom: 5px;
+    text-align: center;
+    margin: 0;
+    font-size: 32px;
 }
 
 .subtitle {
-    color: #9da5b4;
-    margin-bottom: 20px;
+    text-align: center;
+    color: #9299a8;
+    margin: 8px 0 25px;
 }
 
-.camera {
+.camera-container {
     position: relative;
-    width: 100%;
-    background: black;
-    border-radius: 15px;
+    background: #000;
+    border-radius: 18px;
     overflow: hidden;
+    border: 1px solid #242a35;
 }
 
 video {
-    width: 100%;
     display: block;
-    background: black;
-    min-height: 300px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
+    background: #000;
+}
+
+.camera-message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    pointer-events: none;
+}
+
+video:not([data-active="true"]) {
+    opacity: 0.2;
+}
+
+.scan-frame {
+    position: absolute;
+    width: 55%;
+    height: 55%;
+    left: 22.5%;
+    top: 22.5%;
+    border: 2px solid rgba(0, 255, 150, 0.8);
+    border-radius: 12px;
+    pointer-events: none;
+    display: none;
+}
+
+.scanning .scan-frame {
+    display: block;
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: .3;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 .controls {
-    margin: 20px 0;
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    margin: 20px 0;
 }
 
 button {
-    padding: 13px 20px;
-    border: 0;
-    border-radius: 9px;
-    cursor: pointer;
+    padding: 13px 22px;
+    border: none;
+    border-radius: 10px;
     font-size: 15px;
     font-weight: bold;
+    cursor: pointer;
 }
 
 #start {
     background: #00d084;
+    color: #00150d;
 }
 
-#scan {
-    background: #298cff;
+#analyze {
+    background: #248cff;
     color: white;
 }
 
 #stop {
-    background: #333b48;
+    background: #252b35;
     color: white;
 }
 
 button:disabled {
-    opacity: 0.4;
+    opacity: .4;
     cursor: not-allowed;
 }
 
 .status {
-    padding: 12px;
-    background: #111722;
+    padding: 14px;
+    background: #111620;
+    border: 1px solid #222936;
     border-radius: 10px;
-    margin-bottom: 15px;
+    text-align: center;
+    color: #aeb5c2;
+    margin-bottom: 18px;
 }
 
 .result {
-    text-align: left;
-    background: #111722;
-    padding: 20px;
-    border-radius: 12px;
+    background: #111620;
+    border: 1px solid #222936;
+    border-radius: 15px;
+    padding: 22px;
 }
 
-.result h2 {
-    margin-top: 0;
+.result-title {
+    color: #8f98a8;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-.name {
-    font-size: 25px;
-    color: #00d084;
+.object-name {
+    margin-top: 8px;
+    font-size: 30px;
     font-weight: bold;
+    color: #00d084;
 }
 
 .description {
-    margin-top: 10px;
-    color: #c8ced8;
+    margin-top: 12px;
+    color: #c9ced7;
     line-height: 1.6;
+}
+
+.badge {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #19251f;
+    color: #00d084;
+}
+
+.loader {
+    width: 35px;
+    height: 35px;
+    border: 4px solid #303641;
+    border-top-color: #00d084;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 15px auto;
+    display: none;
+}
+
+.loading .loader {
+    display: block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.info {
+    text-align: center;
+    color: #6f7785;
+    font-size: 13px;
+    margin-top: 18px;
 }
 
 canvas {
@@ -128,12 +219,34 @@ canvas {
 <h1>🔬 AI Object Analyzer</h1>
 
 <div class="subtitle">
-Put any object, human or animal in front of your camera
+Show an object to the camera and let AI analyze it
 </div>
 
-<div class="camera">
-    <video id="video" autoplay muted playsinline></video>
+
+<div class="camera-container" id="cameraContainer">
+
+    <video
+        id="video"
+        autoplay
+        muted
+        playsinline>
+    </video>
+
+    <div class="camera-message" id="cameraMessage">
+        Camera starting...
+    </div>
+
+    <div class="scan-frame"></div>
+
 </div>
+
+
+<div class="status" id="status">
+    Loading AI model...
+</div>
+
+<div class="loader" id="loader"></div>
+
 
 <div class="controls">
 
@@ -141,80 +254,219 @@ Put any object, human or animal in front of your camera
         📷 Start Camera
     </button>
 
-    <button id="scan" disabled>
+    <button id="analyze" disabled>
         🔍 Analyze Object
     </button>
 
     <button id="stop" disabled>
-        ⛔ Stop Camera
+        ⛔ Stop
     </button>
 
 </div>
 
-<div class="status" id="status">
-    Camera is not started.
-</div>
 
 <div class="result">
 
-<h2>Analysis</h2>
+    <div class="result-title">
+        AI Result
+    </div>
 
-<div class="name" id="name">
-    Waiting...
+    <div class="object-name" id="objectName">
+        Waiting...
+    </div>
+
+    <div class="description" id="description">
+        Start the camera and place an object in front of it.
+    </div>
+
+    <div class="badge" id="badge">
+        AI Vision
+    </div>
+
 </div>
 
-<div class="description" id="description">
-    Start the camera and show something in front of it.
-</div>
-
-</div>
 
 <canvas id="canvas"></canvas>
 
+
+<div class="info">
+    The first AI model download may take some time.
+</div>
+
 </div>
 
 
-<script>
+<script type="module">
 
-const video = document.getElementById("video");
+/*
+==================================================
+AI LIBRARY
+==================================================
+*/
 
-const startButton = document.getElementById("start");
-const scanButton = document.getElementById("scan");
-const stopButton = document.getElementById("stop");
-
-const statusText = document.getElementById("status");
-
-const resultName = document.getElementById("name");
-const resultDescription = document.getElementById("description");
-
-const canvas = document.getElementById("canvas");
-
-let cameraStream = null;
+import { pipeline }
+from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/+esm";
 
 
-/* ================================
-   START CAMERA
-================================ */
+/*
+==================================================
+ELEMENTS
+==================================================
+*/
 
-async function startCamera() {
+const video =
+    document.getElementById("video");
 
-    statusText.innerText = "Requesting camera permission...";
+const canvas =
+    document.getElementById("canvas");
+
+const startButton =
+    document.getElementById("start");
+
+const analyzeButton =
+    document.getElementById("analyze");
+
+const stopButton =
+    document.getElementById("stop");
+
+const status =
+    document.getElementById("status");
+
+const objectName =
+    document.getElementById("objectName");
+
+const description =
+    document.getElementById("description");
+
+const badge =
+    document.getElementById("badge");
+
+const loader =
+    document.getElementById("loader");
+
+const cameraContainer =
+    document.getElementById("cameraContainer");
+
+const cameraMessage =
+    document.getElementById("cameraMessage");
+
+
+/*
+==================================================
+VARIABLES
+==================================================
+*/
+
+let stream = null;
+
+let ai = null;
+
+let analyzing = false;
+
+
+/*
+==================================================
+LOAD AI
+==================================================
+*/
+
+async function loadAI() {
 
     try {
 
-        if (!navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia) {
+        status.textContent =
+            "🧠 Loading AI vision model...";
+
+        /*
+        This model runs inside the browser.
+
+        It generates a description of an image
+        instead of restricting us to a fixed
+        object list.
+        */
+
+        ai = await pipeline(
+            "image-to-text",
+            "Xenova/vit-gpt2-image-captioning"
+        );
+
+
+        status.textContent =
+            "✅ AI ready. Starting camera...";
+
+        /*
+        Start camera automatically.
+        */
+
+        await startCamera();
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "⚠️ AI failed to load. Camera can still be used.";
+
+        /*
+        Even if AI fails, start camera.
+        */
+
+        await startCamera();
+
+    }
+
+}
+
+
+/*
+==================================================
+START CAMERA
+==================================================
+*/
+
+async function startCamera() {
+
+    try {
+
+        /*
+        Check browser support.
+        */
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
 
             throw new Error(
-                "Camera API is not available. Open this website using HTTPS."
+                "Camera API unavailable. Use HTTPS."
             );
+
         }
 
 
-        cameraStream =
+        /*
+        Don't create another camera stream
+        if one already exists.
+        */
+
+        if (stream) {
+
+            return;
+
+        }
+
+
+        status.textContent =
+            "📷 Requesting camera permission...";
+
+
+        stream =
             await navigator.mediaDevices.getUserMedia({
 
                 video: {
+
                     width: {
                         ideal: 1280
                     },
@@ -224,6 +476,7 @@ async function startCamera() {
                     },
 
                     facingMode: "user"
+
                 },
 
                 audio: false
@@ -231,103 +484,170 @@ async function startCamera() {
             });
 
 
-        video.srcObject = cameraStream;
+        video.srcObject = stream;
+
+        video.setAttribute(
+            "data-active",
+            "true"
+        );
+
 
         await video.play();
 
 
-        statusText.innerText =
-            "🟢 Camera is working. Show an object.";
-
-        startButton.disabled = true;
-
-        scanButton.disabled = false;
-
-        stopButton.disabled = false;
+        cameraMessage.style.display =
+            "none";
 
 
-    } catch (error) {
+        startButton.disabled =
+            true;
+
+        stopButton.disabled =
+            false;
+
+        analyzeButton.disabled =
+            !ai;
+
+
+        status.textContent =
+            "🟢 Camera ready — put an object in front of it.";
+
+    }
+
+    catch (error) {
 
         console.error(error);
 
-        statusText.innerText =
+        cameraMessage.textContent =
+            "Camera permission required";
+
+        status.textContent =
             "❌ Camera error: " + error.message;
 
-        alert(
-            "Camera could not start.\n\n" +
-            "Make sure you:\n" +
-            "1. Allow camera permission\n" +
-            "2. Use HTTPS / GitHub Pages\n" +
-            "3. Don't open the file directly from your computer\n\n" +
-            "Error: " + error.message
-        );
+        /*
+        Helpful error for GitHub Pages.
+        */
+
+        if (
+            error.name ===
+            "NotAllowedError"
+        ) {
+
+            status.textContent =
+                "❌ Camera permission denied. Click the camera icon in Chrome's address bar and allow camera access.";
+
+        }
+
+        if (
+            error.name ===
+            "NotFoundError"
+        ) {
+
+            status.textContent =
+                "❌ No camera was found on this device.";
+
+        }
 
     }
 
 }
 
 
-/* ================================
-   STOP CAMERA
-================================ */
+/*
+==================================================
+STOP CAMERA
+==================================================
+*/
 
 function stopCamera() {
 
-    if (cameraStream) {
+    if (stream) {
 
-        cameraStream
+        stream
             .getTracks()
             .forEach(track => track.stop());
 
-        cameraStream = null;
+        stream = null;
+
     }
+
 
     video.srcObject = null;
 
-    startButton.disabled = false;
+    video.removeAttribute(
+        "data-active"
+    );
 
-    scanButton.disabled = true;
+    cameraMessage.style.display =
+        "flex";
 
-    stopButton.disabled = true;
+    cameraMessage.textContent =
+        "Camera stopped";
 
-    statusText.innerText =
+
+    startButton.disabled =
+        false;
+
+    stopButton.disabled =
+        true;
+
+    analyzeButton.disabled =
+        true;
+
+
+    status.textContent =
         "Camera stopped.";
 
 }
 
 
-/* ================================
-   CAPTURE IMAGE
-================================ */
+/*
+==================================================
+CAPTURE FRAME
+==================================================
+*/
 
-function captureImage() {
+function captureFrame() {
 
-    if (!cameraStream) {
+    if (!stream) {
 
-        alert("Start the camera first.");
+        throw new Error(
+            "Camera is not running."
+        );
 
-        return null;
     }
+
 
     if (
         video.videoWidth === 0 ||
         video.videoHeight === 0
     ) {
 
-        alert("Camera is not ready yet.");
+        throw new Error(
+            "Camera frame is not ready yet."
+        );
 
-        return null;
     }
 
 
-    canvas.width = video.videoWidth;
+    canvas.width =
+        video.videoWidth;
 
-    canvas.height = video.videoHeight;
+    canvas.height =
+        video.videoHeight;
 
 
     const context =
         canvas.getContext("2d");
 
+
+    /*
+    Mirror correction.
+
+    Because laptop webcam preview is
+    normally mirrored, we capture the
+    actual image orientation.
+    */
 
     context.drawImage(
         video,
@@ -338,55 +658,245 @@ function captureImage() {
     );
 
 
-    return canvas.toDataURL(
-        "image/jpeg",
-        0.85
-    );
+    return canvas;
 
 }
 
 
-/* ================================
-   TEMPORARY ANALYZER
-================================ */
+/*
+==================================================
+ANALYZE CAMERA
+==================================================
+*/
 
-function analyzeObject() {
+async function analyzeObject() {
 
-    const image = captureImage();
+    if (!ai) {
 
-    if (!image) {
+        status.textContent =
+            "AI model is not ready yet.";
+
         return;
+
     }
 
 
-    /*
-       CAMERA IS NOW CONFIRMED WORKING.
+    if (!stream) {
 
-       The next step is connecting this image
-       to a real vision AI model.
-    */
+        status.textContent =
+            "Start the camera first.";
 
+        return;
 
-    resultName.innerText =
-        "Image captured successfully ✅";
+    }
 
 
-    resultDescription.innerText =
-        "Your camera is working. The next step is connecting this captured image to an open-ended vision AI model that can identify arbitrary objects.";
+    if (analyzing) {
 
-    statusText.innerText =
-        "📸 Image captured.";
+        return;
+
+    }
+
+
+    analyzing = true;
+
+
+    analyzeButton.disabled =
+        true;
+
+    cameraContainer.classList.add(
+        "scanning"
+    );
+
+
+    loader.style.display =
+        "block";
+
+
+    status.textContent =
+        "🔍 AI is analyzing the object...";
+
+
+    objectName.textContent =
+        "Analyzing...";
+
+
+    description.textContent =
+        "Please wait while the AI examines the camera image.";
+
+    badge.textContent =
+        "Scanning";
+
+
+    try {
+
+        /*
+        Capture current camera frame.
+        */
+
+        const image =
+            captureFrame();
+
+
+        /*
+        Run AI.
+        */
+
+        const result =
+            await ai(image, {
+
+                max_new_tokens: 35
+
+            });
+
+
+        console.log(
+            "AI RESULT:",
+            result
+        );
+
+
+        if (
+            !result ||
+            !result.length ||
+            !result[0].generated_text
+        ) {
+
+            throw new Error(
+                "AI returned no result."
+            );
+
+        }
+
+
+        /*
+        Get generated description.
+        */
+
+        let text =
+            result[0].generated_text.trim();
+
+
+        /*
+        Capitalize first letter.
+        */
+
+        text =
+            text.charAt(0).toUpperCase() +
+            text.slice(1);
+
+
+        /*
+        Display result.
+        */
+
+        objectName.textContent =
+            text;
+
+
+        description.textContent =
+            "AI analysis: " + text;
+
+
+        /*
+        Basic category detection.
+        This does NOT limit the AI's recognition.
+        */
+
+        const lower =
+            text.toLowerCase();
+
+
+        if (
+            /\b(person|man|woman|boy|girl|human|people)\b/
+            .test(lower)
+        ) {
+
+            badge.textContent =
+                "👤 HUMAN";
+
+        }
+
+        else if (
+            /\b(dog|cat|bird|horse|cow|sheep|goat|elephant|bear|zebra|giraffe|rabbit|monkey|animal)\b/
+            .test(lower)
+        ) {
+
+            badge.textContent =
+                "🐾 ANIMAL";
+
+        }
+
+        else {
+
+            badge.textContent =
+                "📦 OBJECT";
+
+        }
+
+
+        status.textContent =
+            "✅ Analysis complete.";
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        objectName.textContent =
+            "Unable to identify";
+
+
+        description.textContent =
+            "The AI could not confidently describe this image. Try moving the object closer, improving lighting, or keeping the object clearly visible.";
+
+
+        badge.textContent =
+            "Try Again";
+
+
+        status.textContent =
+            "⚠️ Analysis failed.";
+
+    }
+
+
+    loader.style.display =
+        "none";
+
+
+    cameraContainer.classList.remove(
+        "scanning"
+    );
+
+
+    analyzeButton.disabled =
+        false;
+
+
+    analyzing = false;
 
 }
 
 
-/* ================================
-   BUTTON EVENTS
-================================ */
+/*
+==================================================
+BUTTONS
+==================================================
+*/
 
 startButton.addEventListener(
     "click",
     startCamera
+);
+
+
+analyzeButton.addEventListener(
+    "click",
+    analyzeObject
 );
 
 
@@ -396,22 +906,28 @@ stopButton.addEventListener(
 );
 
 
-scanButton.addEventListener(
-    "click",
-    analyzeObject
-);
-
-
-/* ================================
-   CLEANUP
-================================ */
+/*
+==================================================
+CLEANUP
+==================================================
+*/
 
 window.addEventListener(
     "beforeunload",
     stopCamera
 );
 
+
+/*
+==================================================
+START EVERYTHING
+==================================================
+*/
+
+loadAI();
+
 </script>
 
 </body>
 </html>
+```
